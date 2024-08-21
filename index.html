@@ -10,66 +10,92 @@
       integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
       crossorigin="anonymous"
     />
+    <link href="/CRUD-SAMPLE/datatables.css" rel="stylesheet" />
   </head>
-  <body>
+  <body onload="table();">
     <div class="container align-content-center text-center mt-5">
       <div id="modal" class="modal fade">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h2 class="modal-title">Country Name</h2>
+              <h2 id="title" class="modal-title">Country Name</h2>
             </div>
             <div class="modal-body">
-              <input
-                type="text"
-                class="form-control my-3"
-                placeholder="Country Name..."
-                id="name"
-              />
-              <textarea
-                class="form-control my-3"
-                placeholder="Short Description"
-                id="shortDesc"
-              ></textarea>
-              <textarea
-                class="form-control my-3"
-                placeholder="Long Description"
-                id="longDesc"
-              ></textarea>
+              <div id="editContent">
+                <input
+                  type="text"
+                  class="form-control my-3"
+                  placeholder="Country Name..."
+                  id="name"
+                />
+                <textarea
+                  class="form-control my-3"
+                  placeholder="Short Description"
+                  id="shortDesc"
+                ></textarea>
+                <textarea
+                  class="form-control my-3"
+                  placeholder="Long Description"
+                  id="longDesc"
+                ></textarea>
+                <input type="hidden" id="editRowID" value="0" />
+              </div>
+
+              <div id="showContent" style="display: none">
+                <h3>Short Description</h3>
+                <div
+                  id="viewShortDesc"
+                  style="overflow-y: auto; height: auto; max-height: 350px"
+                ></div>
+                <hr />
+                <h3>Long Description</h3>
+                <div id="viewLongDesc"></div>
+              </div>
             </div>
             <div class="modal-footer">
               <input
                 type="button"
-                onclick="saveData('add')"
-                value="Save"
+                id="manageBtn"
+                onclick="manageData('add')"
+                value="Add"
                 class="btn btn-success"
               />
-              <input type="button" value="Close" class="btn btn-danger" />
+              <input
+                type="button"
+                id="close"
+                onclick="closeModal()"
+                value="Close"
+                class="btn btn-danger"
+              />
             </div>
           </div>
         </div>
       </div>
 
       <div class="row">
-        <div class="col-md-8 mx-auto">
+        <div class="mx-auto">
           <h1>CRUD-SAMPLE</h1>
 
           <input
             type="button"
-            class="btn btn-success float-end mb-2 mt-5"
+            class="btn btn-success float-end"
             value="Add New"
             id="addNew"
           />
+          <br />
 
-          <table class="table table-hover table-bordered">
-            <thead>
-              <tr>
-                <td>ID</td>
-                <td>Country Name</td>
-                <td>Functions</td>
-              </tr>
-            </thead>
-          </table>
+          <div id="table-container">
+            <table class="table table-hover table-bordered">
+              <thead>
+                <tr>
+                  <td>ID</td>
+                  <td>Country Name</td>
+                  <td>Functions</td>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -84,20 +110,115 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
+    <script src="/CRUD-SAMPLE/datatables.js"></script>
     <script>
+      function table() {
+        const xhttp = new XMLHttpRequest();
+        xhttp.onload = function () {
+          document.getElementById("table-body").innerHTML = this.responseText;
+        };
+        xhttp.open("GET", "fetch_data.php", true);
+        xhttp.send();
+      }
+
+      setInterval(function () {
+        table();
+      }, 1000);
+
       $(document).ready(function () {
-        //show modal
+        // show modal
         $("#addNew").on("click", function () {
           $("#modal").modal("show");
         });
+
+        $("#modal").on("hidden.bs.modal", function () {
+          $("#showContent").fadeOut();
+          $("#editContent").fadeIn();
+          $("#manageBtn").fadeIn();
+          $("#editRowID").val(0);
+          $("#name").val("").css("border", "");
+          $("#shortDesc").val("").css("border", "");
+          $("#longDesc").val("").css("border", "");
+          $("#title").html("Country Name");
+          $("#manageBtn")
+            .attr("value", "Add")
+            .attr("onclick", "manageData('add')");
+        });
+
+        getData(0, 10);
       });
 
-      //save to database
-      function saveData(key) {
+      // delete
+      function deleteRow(editRowID) {
+        if (confirm("Are you sure??")) {
+          $.ajax({
+            url: "ajax.php",
+            method: "POST",
+            dataType: "text",
+            data: {
+              key: "deleteRow",
+              editRowID: editRowID,
+            },
+            success: function (response) {
+              $("#country" + editRowID)
+                .parent()
+                .remove();
+              alert(response);
+            },
+          });
+        }
+      }
+
+      // close modal
+      function closeModal() {
+        var close = $("#close");
+        $("#modal").modal("hide");
+      }
+
+      // view or edit
+      function viewOrEdit(editRowID, type) {
+        $.ajax({
+          url: "ajax.php",
+          method: "POST",
+          dataType: "json",
+          data: {
+            key: "getRowData",
+            editRowID: editRowID,
+          },
+          success: function (response) {
+            if (type == "view") {
+              $("#showContent").fadeIn();
+              $("#editContent").hide();
+              $("#viewShortDesc").html(response.shortDesc);
+              $("#viewLongDesc").html(response.longDesc);
+              $("#manageBtn").hide();
+            } else {
+              $("#editContent").fadeIn();
+              $("#editRowID").val(editRowID);
+              $("#showContent").hide();
+              $("#name").val(response.name);
+              $("#shortDesc").val(response.shortDesc);
+              $("#longDesc").val(response.longDesc);
+              $("#longDesc").val(response.longDesc);
+
+              $("#manageBtn")
+                .attr("value", "Save Changes")
+                .attr("onclick", "manageData('updateRow')");
+            }
+            $("#title").html(response.name);
+            $("#modal").modal("show");
+          },
+        });
+      }
+
+      // manage data
+      function manageData(key) {
         var name = $("#name");
         var shortDesc = $("#shortDesc");
         var longDesc = $("#longDesc");
+        var editRowID = $("#editRowID");
 
+        // add data
         if (isNotEmpty(name) && isNotEmpty(shortDesc) && isNotEmpty(longDesc)) {
           $.ajax({
             url: "ajax.php",
@@ -107,16 +228,25 @@
               key: key,
               name: name.val(),
               shortDesc: shortDesc.val(),
-              longDesc: longDesc.val()
+              longDesc: longDesc.val(),
+              rowID: editRowID.val(),
             },
             success: function (response) {
-              alert(response);
-            }
+              if (response != "success") {
+                alert(response);
+              } else {
+                $("#modal").modal("hide");
+                $("#country" + editRowID.val()).html(name.val());
+                $("#manageBtn")
+                  .attr("value", "Add")
+                  .attr("onclick", "manageData('add')");
+              }
+            },
           });
         }
       }
 
-      //check if empty
+      // check if empty
       function isNotEmpty(caller) {
         if (caller.val() == "") {
           caller.css("border", "1px solid red");
