@@ -1,11 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD-SAMPLE</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container align-content-center text-center mt-5">
+      <div id="modal" class="modal fade">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2 class="modal-title">Country Name</h2>
+            </div>
+            <div class="modal-body">
+              <input
+                type="text"
+                class="form-control my-3"
+                placeholder="Country Name..."
+                id="name"
+              />
+              <textarea
+                class="form-control my-3"
+                placeholder="Short Description"
+                id="shortDesc"
+              ></textarea>
+              <textarea
+                class="form-control my-3"
+                placeholder="Long Description"
+                id="longDesc"
+              ></textarea>
+            </div>
+            <div class="modal-footer">
+              <input
+                type="button"
+                onclick="saveData('add')"
+                value="Save"
+                class="btn btn-success"
+              />
+              <input type="button" value="Close" class="btn btn-danger" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8 mx-auto">
+          <h1>CRUD-SAMPLE</h1>
+
+          <input
+            type="button"
+            class="btn btn-success float-end mb-2 mt-5"
+            value="Add New"
+            id="addNew"
+          />
+
+          <table class="table table-hover table-bordered">
+            <thead>
+              <tr>
+                <td>ID</td>
+                <td>Country Name</td>
+                <td>Functions</td>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      $(document).ready(function () {
+        //show modal
+        $("#addNew").on("click", function () {
+          $("#modal").modal("show");
+        });
+      });
+
+      //save to database
+      function saveData(key) {
+        var name = $("#name");
+        var shortDesc = $("#shortDesc");
+        var longDesc = $("#longDesc");
+
+        if (isNotEmpty(name) && isNotEmpty(shortDesc) && isNotEmpty(longDesc)) {
+          $.ajax({
+            url: "ajax.php",
+            method: "POST",
+            dataType: "text",
+            data: {
+              key: key,
+              name: name.val(),
+              shortDesc: shortDesc.val(),
+              longDesc: longDesc.val()
+            },
+            success: function (response) {
+              alert(response);
+            }
+          });
+        }
+      }
+
+      //check if empty
+      function isNotEmpty(caller) {
+        if (caller.val() == "") {
+          caller.css("border", "1px solid red");
+          return false;
+        } else {
+          caller.css("border", "");
+        }
+
+        return true;
+      }
+    </script>
+  </body>
 </html>
